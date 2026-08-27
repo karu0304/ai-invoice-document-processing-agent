@@ -10,6 +10,12 @@ Gmail Trigger → Analyze Document (Google Gemini) → Google Sheets → IF Vali
 
 ![AI Invoice & Document Processing Agent Workflow](workflow-overview.png)
 
+## AI Invoice Extraction
+
+The workflow uses Google Gemini to analyze the PDF invoice attachment and extract structured invoice information.
+
+![Gemini Invoice Extraction](gemini-invoice-extraction.png)
+
 ## Features
 
 - Detects invoice emails with attachments.
