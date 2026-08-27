@@ -25,7 +25,7 @@ Gmail Trigger → Analyze Document (Google Gemini) → Google Sheets → IF Vali
 
 ## Setup
 
-1. Import `workflow/ai-invoice-processing-agent.json` into n8n.
+1. Import `ai-invoice-processing-agent.json` into n8n.
 2. Re-select your Gmail, Gemini, and Google Sheets credentials.
 3. Set your Google Sheet ID and sheet name.
 4. Replace `YOUR_EMAIL@example.com` with your notification recipient.
