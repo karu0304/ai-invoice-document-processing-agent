@@ -16,6 +16,17 @@ The workflow uses Google Gemini to analyze the PDF invoice attachment and extrac
 
 ![Gemini Invoice Extraction](gemini-invoice-extraction.png)
 
+## Invoice Validation
+
+Before sending the final notification, the workflow validates the invoice by:
+
+- Comparing the sum of line-item amounts with the invoice total.
+- Verifying quantity × unit price for each line item.
+- Routing valid invoices to the success email.
+- Routing failed validation to the review email.
+
+![Invoice Validation](invoice-validation.png)
+
 ## Features
 
 - Detects invoice emails with attachments.
