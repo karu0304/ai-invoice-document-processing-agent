@@ -1,0 +1,10 @@
+.env
+.env.*
+*.key
+*.pem
+credentials.json
+.n8n/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

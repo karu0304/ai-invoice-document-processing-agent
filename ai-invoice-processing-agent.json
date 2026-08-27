@@ -1,0 +1,308 @@
+{
+  "name": "AI Invoice & Document Processing Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "=subject:invoice has:attachment"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -528,
+        -160
+      ],
+      "id": "242b009e-40a9-42e7-95b8-f1c8dd3f70fd",
+      "name": "Gmail Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "=You are an invoice data extraction assistant.\n\nAnalyze the attached invoice PDF and extract:\n\n1. Invoice ID\n2. Vendor\n3. Invoice Date\n4. Amount\n5. Currency\n6. Line Items\n\nReturn ONLY valid JSON in exactly this format:\n\n{\n  \"invoice_id\": \"\",\n  \"vendor\": \"\",\n  \"invoice_date\": \"\",\n  \"amount\": \"\",\n  \"currency\": \"\",\n  \"line_items\": []\n}\n\nDo not add markdown, explanations, or any text outside the JSON.",
+        "inputType": "binary",
+        "binaryPropertyName": "=attachment_0",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        -160
+      ],
+      "id": "330b130b-658e-4e49-985c-94bc386fb6e7",
+      "name": "Analyze document"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "AI Invoice Processing Agent"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Invoice ID": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, '').trim()).invoice_id }}",
+            "Vendor": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, '').trim()).vendor }}",
+            "Invoice Date": "= {{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, '').trim()).invoice_date }}",
+            "Amount": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, '').trim()).amount }}",
+            "Currency": "={{ JSON.parse($json.content.parts[0].text.replace(/```json|```/g, '').trim()).currency }}",
+            "Line Items": "={{ JSON.stringify(JSON.parse($json.content.parts[0].text.replace(/```json|```/g, '').trim()).line_items) }}",
+            "Status": "=Generated"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Invoice ID",
+              "displayName": "Invoice ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Vendor",
+              "displayName": "Vendor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Invoice Date",
+              "displayName": "Invoice Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Currency",
+              "displayName": "Currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Line Items",
+              "displayName": "Line Items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Anomaly",
+              "displayName": "Anomaly",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -96,
+        -160
+      ],
+      "id": "ac7447e5-f5ae-44dc-93d8-a3ac794e4067",
+      "name": "Append row in sheet"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fef42712-c22e-4a7f-877e-fb85c79d5e69",
+              "leftValue": "={{ JSON.parse($json[\"Line Items\"]).reduce((sum, item) => sum + Number(item.amount), 0) }}",
+              "rightValue": "={{ Number($json[\"Amount\"]) }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "db02feef-f8aa-4a07-ad06-b41a916c5602",
+              "leftValue": "={{ JSON.parse($json[\"Line Items\"]).every(item => Number(item.quantity) * Number(item.unit_price) === Number(item.amount)) }}",
+              "rightValue": "=true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        128,
+        -160
+      ],
+      "id": "3d6c2b1f-5a95-43c2-88d6-3a56c408a0dd",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_EMAIL@example.com",
+        "subject": "=Invoice {{ $json[\"Invoice ID\"] }} Processed Successfully",
+        "message": "=Hello Karunya,\n\nYour invoice has been successfully processed.\n\nInvoice ID: {{ $json[\"Invoice ID\"] }}\nVendor: {{ $json[\"Vendor\"] }}\nInvoice Date: {{ $json[\"Invoice Date\"] }}\nAmount: ₹{{ $json[\"Amount\"] }}\nCurrency: {{ $json[\"Currency\"] }}\nStatus: {{ $json[\"Status\"] }}\n\nThe invoice passed the validation check successfully.\n\nRegards,\nInvoice Processing Agent",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        -247.5
+      ],
+      "id": "6ea3c607-0137-46f1-b1ba-d4491cb1c9dc",
+      "name": "Send a message"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_EMAIL@example.com",
+        "subject": "=Invoice {{$json[\"Invoice ID\"]}} Requires Review",
+        "message": "=Hello Karunya,\n\nInvoice {{$json[\"Invoice ID\"]}} requires manual review.\n\nVendor: {{$json[\"Vendor\"]}}\nInvoice Amount: {{$json[\"Amount\"]}} {{$json[\"Currency\"]}}\n\nThe invoice failed the validation checks.\n\nPlease review the invoice before processing.\n\nRegards,\nInvoice Processing Agent",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        -64
+      ],
+      "id": "c0105a89-7803-4860-8e22-f456481f882b",
+      "name": "Send a message1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Analyze document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze document": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "22a0b66d-e66f-4fa4-8442-910ceda52b34",
+  "nodeGroups": [],
+  "tags": []
+}
