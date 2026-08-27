@@ -6,6 +6,10 @@ An n8n automation that receives invoice emails, extracts invoice data from PDF a
 
 Gmail Trigger → Analyze Document (Google Gemini) → Google Sheets → IF Validation → Success/Review Email
 
+## Workflow Screenshot
+
+![AI Invoice & Document Processing Agent Workflow](workflow-overview.png)
+
 ## Features
 
 - Detects invoice emails with attachments.
